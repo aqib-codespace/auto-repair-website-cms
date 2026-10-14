@@ -1,0 +1,531 @@
+@import "tailwindcss";
+
+/*
+ * ---------------------------------------------------------------------------
+ * DESIGN TOKENS
+ * ---------------------------------------------------------------------------
+ * Every colour used by the marketing site resolves through one of four
+ * variables below, so rebranding the whole template is a two-value change:
+ * set Brand colour + Accent colour in /admin → Settings and the values are
+ * injected onto :root at request time by src/app/layout.js.
+ *
+ * Shades are derived with color-mix() rather than stored, so an admin only
+ * ever picks one brand colour and every hover/tint state follows it.
+ *
+ * Fonts are injected on <html> by next/font in layout.js; --font-geist is
+ * injected on the admin wrapper instead, since the dashboard intentionally
+ * uses a neutral UI typeface rather than the site's display face.
+ */
+:root {
+  --brand: #1a4fd1;
+  --accent: #f59e0b;
+  --ink: #0b1220;
+  --ink-soft: #151f33;
+}
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-dark: color-mix(in oklab, var(--brand), black 16%);
+  --color-brand-light: color-mix(in oklab, var(--brand), white 82%);
+  --color-accent: var(--accent);
+  --color-accent-dark: color-mix(in oklab, var(--accent), black 14%);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sora), var(--font-inter), sans-serif;
+  --font-condensed: var(--font-oswald), "Arial Narrow", ui-sans-serif, sans-serif;
+  --font-admin: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+
+  /*
+   * TORQUE PALETTE — the second template
+   * ---------------------------------------------------------------------------
+   * A dark performance-garage scheme: graphite panels, near-white type, safety
+   * orange for anything that asks for a click. Momentum is a bright site with a
+   * dark hero; this is a dark site throughout, which is the sharpest possible
+   * contrast between two designs that show identical content.
+   *
+   * The names read light-to-dark (`bone` is the page, `clay-900` is the type)
+   * because the scale is semantic, not literal: `bone` is always the page ground
+   * and `clay-900` is always the strongest text, whichever way round the theme
+   * runs. That is what lets one set of section files carry either scheme.
+   *
+   * `--brand` is deliberately NOT redefined — see `.template-torque` below for
+   * how the shop's own colours still drive this template's buttons.
+   */
+  --color-bone: #0e1214; /* page ground */
+  --color-bone-deep: #151b1e; /* alternating band */
+  --color-clay-100: #1d2529; /* raised surface */
+  --color-clay-200: #2a3338; /* hairline */
+  --color-clay-300: #4d585e; /* numerals, quiet marks */
+  --color-clay-400: #6b767c;
+  --color-clay-500: #8d979d; /* muted labels */
+  --color-clay-700: #bcc5ca; /* body copy */
+  --color-clay-900: #f2f5f6; /* headings, strongest text */
+  --color-terra: #f97316; /* safety orange */
+
+  --shadow-soft: 0 1px 2px 0 rgb(11 18 32 / 0.04), 0 4px 16px -4px rgb(11 18 32 / 0.08);
+  --shadow-card: 0 1px 3px 0 rgb(11 18 32 / 0.05), 0 12px 32px -12px rgb(11 18 32 / 0.14);
+  --shadow-lift: 0 2px 4px 0 rgb(11 18 32 / 0.05), 0 24px 48px -16px rgb(11 18 32 / 0.22);
+  --shadow-glow: 0 12px 32px -8px color-mix(in oklab, var(--brand), transparent 62%);
+}
+
+/* Headings share one face and tightened tracking across the whole site. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  /* Anchor targets clear the sticky header instead of hiding beneath it. */
+  :where(section[id], div[id]) {
+    scroll-margin-top: 5.5rem;
+  }
+
+  /* One consistent, always-visible focus treatment for keyboard users. */
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * MOTION
+ * ---------------------------------------------------------------------------
+ */
+
+/* Hero entrance: elements rise and fade in, staggered via inline animation-delay. */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-rise {
+  opacity: 0;
+  animation: 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards hero-rise;
+}
+
+/*
+ * Scroll reveal. One transition, four entry directions — the variant is set
+ * per call site so a section can stagger its own children in a direction that
+ * matches the layout instead of everything sliding up identically.
+ */
+.reveal {
+  opacity: 0;
+  transition:
+    opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(28px);
+}
+
+.reveal-left {
+  transform: translateX(-32px);
+}
+
+.reveal-right {
+  transform: translateX(32px);
+}
+
+.reveal-scale {
+  transform: scale(0.94);
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Ambient colour orbs that drift behind dark sections. */
+@keyframes orb-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4%, -6%, 0) scale(1.12);
+  }
+}
+
+.orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(72px);
+  opacity: 0.5;
+  animation: orb-drift 18s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Slow rotation for decorative rings. */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin-slow {
+  animation: spin-slow 26s linear infinite;
+}
+
+/* Sheen that sweeps across a card on hover. */
+@keyframes sheen {
+  from {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(240%) skewX(-18deg);
+  }
+}
+
+.group:hover .sheen {
+  animation: sheen 0.9s ease-out;
+}
+
+/* Soft pulse for the "now booking" status dot. */
+@keyframes ping-soft {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  70%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.ping-soft {
+  animation: ping-soft 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Scroll cue under the hero. */
+@keyframes scroll-hint {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(7px);
+    opacity: 1;
+  }
+}
+
+.scroll-hint {
+  animation: scroll-hint 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-rise {
+    animation: none;
+    opacity: 1;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .orb,
+  .spin-slow,
+  .ping-soft,
+  .scroll-hint,
+  .sheen {
+    animation: none;
+  }
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * SURFACES
+ * ---------------------------------------------------------------------------
+ */
+
+/* Ambient brand glow used behind dark sections (hero, CTA band, financing). */
+.surface-ink {
+  background-color: var(--ink);
+  background-image:
+    radial-gradient(
+      60% 60% at 12% 0%,
+      color-mix(in oklab, var(--brand), transparent 72%) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      50% 50% at 100% 100%,
+      color-mix(in oklab, var(--accent), transparent 86%) 0%,
+      transparent 60%
+    );
+}
+
+/* Saturated brand band used for the mid-page call to action. */
+.surface-brand {
+  background-image: linear-gradient(
+    120deg,
+    color-mix(in oklab, var(--brand), black 22%) 0%,
+    var(--brand) 46%,
+    color-mix(in oklab, var(--brand), var(--accent) 34%) 100%
+  );
+}
+
+/* Faint engineering grid — reads as "workshop precision" without clutter. */
+.surface-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+/* Hairline separator that fades out at both ends. */
+.rule-fade {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in oklab, var(--brand), transparent 70%),
+    transparent
+  );
+}
+
+/* Frosted panel used for the floating cards over hero/financing imagery. */
+.glass {
+  background-color: rgb(255 255 255 / 0.07);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.09),
+    0 18px 40px -20px rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+
+.glass-light {
+  background-color: rgb(255 255 255 / 0.92);
+  border: 1px solid rgb(255 255 255 / 0.7);
+  box-shadow: 0 18px 40px -18px rgb(11 18 32 / 0.28);
+  backdrop-filter: blur(12px);
+}
+
+/* Brand-to-accent gradient text, used on one word of a headline — never more. */
+.text-gradient {
+  background-image: linear-gradient(
+    100deg,
+    color-mix(in oklab, var(--brand), white 42%),
+    color-mix(in oklab, var(--accent), white 18%)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Short accent rule that sits under a section heading. */
+.heading-rule::after {
+  content: "";
+  display: block;
+  width: 3rem;
+  height: 3px;
+  margin-top: 1.25rem;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--brand), var(--accent));
+}
+
+.heading-rule-center::after {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Continuous logo/marque strip. The track holds two copies of the list. */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee 38s linear infinite;
+  will-change: transform;
+}
+
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * ATELIER
+ * ---------------------------------------------------------------------------
+ * Editorial details that would be noise in Momentum: a hairline rule that reads
+ * as a printed rule rather than a border, and a drop cap for the opening
+ * paragraph of the shop's story.
+ */
+.hairline {
+  border-top: 1px solid var(--color-clay-200);
+}
+
+/*
+ * Torque reuses the validated appointment form from Momentum rather than
+ * duplicating 120 lines of markup and its error handling. Restyling it through
+ * scoped CSS keeps one form implementation with two appearances — here, squared
+ * fields sunk into the dark panel instead of rounded white ones.
+ *
+ * The brand colour is lifted rather than replaced: a mid-tone brand on a #0e1214
+ * ground fails contrast, so it is mixed toward white by a fixed amount. A rebrand
+ * in Settings still drives both templates; this only makes it legible on black.
+ */
+.template-torque {
+  --brand-lift: color-mix(in oklab, var(--brand), white 22%);
+  --brand-lift-strong: color-mix(in oklab, var(--brand), white 34%);
+}
+
+.template-torque input:not([type="checkbox"]),
+.template-torque textarea,
+.template-torque select {
+  border-radius: 0;
+  border-color: var(--color-clay-200);
+  background-color: color-mix(in oklab, var(--color-bone), white 4%);
+  color: var(--color-clay-900);
+  box-shadow: none;
+}
+
+.template-torque input::placeholder,
+.template-torque textarea::placeholder {
+  color: var(--color-clay-400);
+}
+
+/* The native date/select controls draw their own dark-on-dark glyphs otherwise. */
+.template-torque input[type="date"] {
+  color-scheme: dark;
+}
+
+.template-torque input:focus,
+.template-torque textarea:focus,
+.template-torque select:focus {
+  border-color: var(--color-terra);
+  --tw-ring-color: color-mix(in oklab, var(--color-terra), transparent 78%);
+}
+
+.template-torque label {
+  color: var(--color-clay-700);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+}
+
+/*
+ * The legal pages are one shared reading frame for both templates. Momentum wants
+ * a floating white card on grey; Torque wants the page itself to carry the text,
+ * so the card loses its rounding, border and shadow rather than being duplicated.
+ */
+.template-torque .legal-frame {
+  border-color: var(--color-clay-200);
+  background-color: var(--color-bone);
+}
+
+.template-torque .legal-frame article {
+  border-radius: 0;
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/*
+ * The form's submit button arrives from Momentum's Button component with the form.
+ * Squaring it and giving it the accent keeps it identical to this template's own
+ * actions without forking the form to swap one element.
+ */
+.template-torque button[type="submit"] {
+  border-radius: 0;
+  background-color: var(--color-terra);
+  color: #0e1214;
+  box-shadow: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.template-torque button[type="submit"]:hover:not(:disabled) {
+  background-color: color-mix(in oklab, var(--color-terra), white 14%);
+}
+
+.dropcap::first-letter {
+  float: left;
+  font-family: var(--font-condensed);
+  font-size: 3.4em;
+  line-height: 0.82;
+  padding: 0.06em 0.1em 0 0;
+  color: var(--color-terra);
+}
+
+/* Gallery masonry: CSS columns keep it dependency-free and reflow-friendly. */
+.masonry {
+  column-count: 1;
+  column-gap: 1rem;
+}
+
+.masonry > * {
+  margin-bottom: 1rem;
+  break-inside: avoid;
+}
+
+@media (min-width: 640px) {
+  .masonry {
+    column-count: 2;
+    column-gap: 1.25rem;
+  }
+
+  .masonry > * {
+    margin-bottom: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry {
+    column-count: 3;
+    column-gap: 1.5rem;
+  }
+
+  .masonry > * {
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .masonry {
+    column-count: 4;
+  }
+}
+
+/* Horizontal snap track for the mobile reviews carousel. */
+.snap-track {
+  scrollbar-width: none;
+}
+
+.snap-track::-webkit-scrollbar {
+  display: none;
+}
