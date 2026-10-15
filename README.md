@@ -1,5 +1,7 @@
 # Auto Repair Shop Website + CMS
 
+[![Live demo](https://img.shields.io/badge/Live_demo-auto--repair--zeta.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://auto-repair-zeta.vercel.app)
+
 A premium, mobile-first marketing site for an independent auto repair shop, with a
 full content management panel. Built to be duplicated: every word, photo, colour,
 service, review, FAQ, and gallery image is editable from `/admin`, and rebranding
